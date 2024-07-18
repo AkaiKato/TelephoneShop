@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq.Expressions;
 
 namespace Domain.Interfaces
 {
@@ -14,8 +9,8 @@ namespace Domain.Interfaces
 
         IEnumerable<T> Finde(Expression<Func<T, bool>> expression);
 
-        void Add (T item);
+        void Add(T item);
 
-        void Remove (T item);
+        void Remove(T item);
     }
 }
