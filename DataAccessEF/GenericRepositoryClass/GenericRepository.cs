@@ -1,7 +1,7 @@
 ﻿using DataAccessEF.Data;
 using Domain.Interfaces.Generic;
 using System.Linq.Expressions;
-namespace DataAccessEF.GenericRepositoryClass
+namespace DataAccessEF.GenericRepository
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
