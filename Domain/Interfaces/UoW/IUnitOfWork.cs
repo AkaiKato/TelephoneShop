@@ -10,6 +10,6 @@
 
         ITelephoneRepository TelephoneRepository { get; }
 
-        void Save();
+        Task SaveAsync(CancellationToken cancellationToken);
     }
 }

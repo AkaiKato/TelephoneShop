@@ -4,16 +4,16 @@ namespace Domain.Interfaces.Generic
 {
     public interface IGenericRepository<T> where T : class
     {
-        T? Get(int id);
-        IEnumerable<T> GetAll();
+        Task<T?> GetAsync(int id, CancellationToken cancellationToken);
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken);
 
-        IEnumerable<T> Find(Expression<Func<T, bool>> expression);
+        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression, CancellationToken cancellationToken);
 
-        bool Any(Expression<Func<T, bool>> expression);
+        Task<bool> AnyAsync(Expression<Func<T, bool>> expression, CancellationToken cancellationToken);
 
-        void Add(T item);
+        Task AddAsync(T item, CancellationToken cancellationToken);
 
-        void Update(T item);
+        void Update (T item);
 
         void Remove(T item);
 

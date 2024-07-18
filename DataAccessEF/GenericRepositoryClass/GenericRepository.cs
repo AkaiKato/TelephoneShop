@@ -1,5 +1,6 @@
 ﻿using DataAccessEF.Data;
 using Domain.Interfaces.Generic;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 namespace DataAccessEF.GenericRepository
 {
@@ -12,29 +13,29 @@ namespace DataAccessEF.GenericRepository
             _context = dataContext;
         }
 
-        public T? Get(int id)
+        public async Task<T?> GetAsync(int id, CancellationToken t)
         {
-            return _context.Set<T>().Find(id);
+            return await _context.Set<T>().FindAsync(id, t);
         }
 
-        public IEnumerable<T> GetAll()
+        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return _context.Set<T>().ToList();
+            return await _context.Set<T>().ToListAsync(cancellationToken);
         }
 
-        public IEnumerable<T> Find(Expression<Func<T, bool>> expression)
+        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression, CancellationToken cancellationToken)
         {
-            return _context.Set<T>().Where(expression);
+            return await _context.Set<T>().Where(expression).ToListAsync(cancellationToken);
         }
 
-        public bool Any(Expression<Func<T, bool>> expression)
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> expression, CancellationToken cancellationToken)
         {
-            return _context.Set<T>().Any(expression);
+            return await _context.Set<T>().AnyAsync(expression, cancellationToken);
         }
 
-        public void Add(T item)
+        public async Task AddAsync(T item, CancellationToken cancellationToken)
         {
-            _context.Set<T>().Add(item);
+            await _context.Set<T>().AddAsync(item, cancellationToken);
         }
 
         public void Update(T item)
