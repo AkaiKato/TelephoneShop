@@ -13,6 +13,8 @@ namespace Domain.Interfaces.Generic
 
         void Add(T item);
 
+        void Update(T item);
+
         void Remove(T item);
 
     }

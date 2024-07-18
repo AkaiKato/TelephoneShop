@@ -37,6 +37,11 @@ namespace DataAccessEF.GenericRepository
             _context.Set<T>().Add(item);
         }
 
+        public void Update(T item)
+        {
+            _context.Set<T>().Update(item);
+        }
+
         public void Remove(T item)
         {
             _context.Set<T>().Remove(item);

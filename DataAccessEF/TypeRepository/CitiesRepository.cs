@@ -9,5 +9,6 @@ namespace DataAccessEF.TypeRepository
     {
         public CitiesRepository(DataContext dataContext) : base(dataContext)
         { }
+
     }
 }
