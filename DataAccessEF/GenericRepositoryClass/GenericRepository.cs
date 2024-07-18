@@ -27,6 +27,11 @@ namespace DataAccessEF.GenericRepository
             return _context.Set<T>().Where(expression);
         }
 
+        public bool Any(Expression<Func<T, bool>> expression)
+        {
+            return _context.Set<T>().Any(expression);
+        }
+
         public void Add(T item)
         {
             _context.Set<T>().Add(item);
