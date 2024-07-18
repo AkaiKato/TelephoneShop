@@ -9,8 +9,11 @@ namespace Domain.Interfaces.Generic
 
         IEnumerable<T> Find(Expression<Func<T, bool>> expression);
 
+        bool Any(Expression<Func<T, bool>> expression);
+
         void Add(T item);
 
         void Remove(T item);
+
     }
 }
