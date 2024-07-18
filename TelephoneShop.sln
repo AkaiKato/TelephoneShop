@@ -5,6 +5,10 @@ VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelephoneShop", "TelephoneShop\TelephoneShop.csproj", "{0AB6C402-2000-4D46-B3D7-E57C1CF0C515}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessEF", "DataAccessEF\DataAccessEF.csproj", "{4F296743-9608-4A54-91EA-1EB10B8A7DAC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{87EAE70E-D107-4B23-A299-5D8ADC7DA8A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{0AB6C402-2000-4D46-B3D7-E57C1CF0C515}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AB6C402-2000-4D46-B3D7-E57C1CF0C515}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AB6C402-2000-4D46-B3D7-E57C1CF0C515}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F296743-9608-4A54-91EA-1EB10B8A7DAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F296743-9608-4A54-91EA-1EB10B8A7DAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F296743-9608-4A54-91EA-1EB10B8A7DAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F296743-9608-4A54-91EA-1EB10B8A7DAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87EAE70E-D107-4B23-A299-5D8ADC7DA8A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87EAE70E-D107-4B23-A299-5D8ADC7DA8A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87EAE70E-D107-4B23-A299-5D8ADC7DA8A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87EAE70E-D107-4B23-A299-5D8ADC7DA8A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

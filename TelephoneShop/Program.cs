@@ -1,5 +1,5 @@
+using DataAccessEF.Data;
 using Microsoft.EntityFrameworkCore;
-using TelephoneShop.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

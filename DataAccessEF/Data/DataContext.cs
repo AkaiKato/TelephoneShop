@@ -1,17 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TelephoneShop.Models;
 
-namespace TelephoneShop.Data
+namespace DataAccessEF.Data
 {
     public class DataContext : DbContext
     {
-        public DataContext(DbContextOptions<DataContext> options) : base(options) 
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
         { }
 
-        public DbSet<Telephone> Telephone {  get; set; }
+        public DbSet<Telephone> Telephone { get; set; }
 
         public DbSet<Catalog> Catalog { get; set; }
-
         public DbSet<Cities> Cities { get; set; }
 
         public DbSet<CitiesToTelephoneCost> CitiesToTelephoneCost { get; set; }
