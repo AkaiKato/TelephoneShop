@@ -8,6 +8,6 @@ namespace Domain.DTO.Create
 
         public string? Description { get; set; }
 
-        public Catalog? ParentCatalog { get; set; }
+        public int? ParentCatalog { get; set; }
     }
 }

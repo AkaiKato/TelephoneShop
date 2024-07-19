@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Domain.DTO.Create;
+﻿using Domain.DTO.Create;
 using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Mvc;
 using TelephoneShop.Models;
@@ -11,12 +10,10 @@ namespace TelephoneShop.Controllers
     public class CitiesController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
 
-        public CitiesController(IUnitOfWork unitOfWork, IMapper mapper)
+        public CitiesController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
         }
 
         [HttpGet("GetAllCities")]
@@ -69,9 +66,12 @@ namespace TelephoneShop.Controllers
                 if (await _unitOfWork.CitiesRepository.AnyAsync(x => x.Name.Trim().ToLower() == cityCreate.Name.Trim().ToLower(), cancellationToken))
                     return BadRequest("Such sity is already created");
 
-                var cityMaped = _mapper.Map<Cities>(cityCreate);
+                var newCity = new Cities
+                {
+                    Name = cityCreate.Name,
+                };
 
-                _unitOfWork.CitiesRepository.Add(cityMaped);
+                _unitOfWork.CitiesRepository.Add(newCity);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }

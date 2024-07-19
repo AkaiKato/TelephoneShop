@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Domain.DTO.Create;
+﻿using Domain.DTO.Create;
 using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +11,10 @@ namespace TelephoneShop.Controllers
     public class CatalogController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
 
-        public CatalogController(IUnitOfWork unitOfWork, IMapper mapper)
+        public CatalogController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
         }
 
         [HttpGet("GetAllCatalogs")]
@@ -70,9 +67,16 @@ namespace TelephoneShop.Controllers
                 if (await _unitOfWork.CatalogRepository.AnyAsync(x => x.Name.Trim().ToLower() == catalogCreate.Name.Trim().ToLower(), cancellationToken))
                     return BadRequest("Such catalog is already created");
 
-                var catalogMapped = _mapper.Map<Catalog>(catalogCreate);
+                if(catalogCreate.ParentCatalog != null && await _unitOfWork.CatalogRepository.FindAsync(x => x.Id == catalogCreate.ParentCatalog, cancellationToken) == null)
+                    return NotFound("No such parent catalog");
 
-                _unitOfWork.CatalogRepository.Add(catalogMapped);
+                var newCatalog = new Catalog
+                {
+                    Name = catalogCreate.Name,
+                    Description = catalogCreate.Description,
+                };
+
+                _unitOfWork.CatalogRepository.Add(newCatalog);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
