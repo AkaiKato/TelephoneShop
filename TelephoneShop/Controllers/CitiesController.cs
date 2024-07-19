@@ -19,15 +19,15 @@ namespace TelephoneShop.Controllers
         [HttpGet("GetAllCities")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Cities> allCities;
+            IEnumerable<Cities>? allCities = null;
 
             try
             {
                 allCities = await _unitOfWork.CitiesRepository.GetAllAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok(allCities);
@@ -36,7 +36,7 @@ namespace TelephoneShop.Controllers
         [HttpGet("{id}/city")]
         public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken) 
         {
-            Cities? city;
+            Cities? city = null;
             try
             {
                 if (id <= 0)
@@ -47,9 +47,9 @@ namespace TelephoneShop.Controllers
 
                 city = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok(city);
@@ -75,9 +75,9 @@ namespace TelephoneShop.Controllers
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok("Successfully created");
@@ -111,9 +111,9 @@ namespace TelephoneShop.Controllers
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok("Successfully updated");
@@ -136,9 +136,9 @@ namespace TelephoneShop.Controllers
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+            
             }
 
             return Ok("Successfully deleted");

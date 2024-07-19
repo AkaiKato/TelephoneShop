@@ -1,6 +1,6 @@
 ﻿using Domain.DTO.Create;
+using Domain.DTO.Update;
 using Domain.Interfaces.UoW;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TelephoneShop.Models;
 
@@ -20,15 +20,15 @@ namespace TelephoneShop.Controllers
         [HttpGet("GetAllCatalogs")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Catalog> allCatalogs;
+            IEnumerable<Catalog>? allCatalogs = null;
 
             try
             {
                 allCatalogs = await _unitOfWork.CatalogRepository.GetAllAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok(allCatalogs);
@@ -37,7 +37,7 @@ namespace TelephoneShop.Controllers
         [HttpGet("{id}/Catalog")]
         public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
-            Catalog? catalog;
+            Catalog? catalog = null;
             try
             {
                 if (id <= 0)
@@ -48,9 +48,9 @@ namespace TelephoneShop.Controllers
 
                 catalog = await _unitOfWork.CatalogRepository.GetAsync(id, cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok(catalog);
@@ -67,29 +67,37 @@ namespace TelephoneShop.Controllers
                 if (await _unitOfWork.CatalogRepository.AnyAsync(x => x.Name.Trim().ToLower() == catalogCreate.Name.Trim().ToLower(), cancellationToken))
                     return BadRequest("Such catalog is already created");
 
-                if(catalogCreate.ParentCatalog != null && await _unitOfWork.CatalogRepository.FindAsync(x => x.Id == catalogCreate.ParentCatalog, cancellationToken) == null)
-                    return NotFound("No such parent catalog");
+                Catalog? parentCatalog = null;
+
+                if (catalogCreate.ParentCatalog != null)
+                {
+                    parentCatalog = await _unitOfWork.CatalogRepository.GetAsync(catalogCreate.ParentCatalog.Value, cancellationToken);
+
+                    if (parentCatalog == null)
+                        return NotFound("No such parent catalog");
+                }
 
                 var newCatalog = new Catalog
                 {
                     Name = catalogCreate.Name,
                     Description = catalogCreate.Description,
+                    ParentCatalog = parentCatalog,
                 };
 
                 _unitOfWork.CatalogRepository.Add(newCatalog);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok("Successfully created");
         }
 
         [HttpPut("UpdateCatalog")]
-        public async Task<IActionResult> UpdateCity([FromBody] Catalog catalogUpdate, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateCatalog([FromBody] UpdateCatalog catalogUpdate, CancellationToken cancellationToken)
         {
             try
             {
@@ -103,22 +111,22 @@ namespace TelephoneShop.Controllers
                         && x.Id != catalogUpdate.Id, cancellationToken))
                     return BadRequest("Catalog with such name already exists");
 
-                var cityToUpdate = (await _unitOfWork.CatalogRepository.FindAsync(x => x.Id == catalogUpdate.Id, cancellationToken)).First();
+                var ttt = await _unitOfWork.CatalogRepository.FindAsync(x => x.Id == catalogUpdate.ParentCatalog, cancellationToken);
+                var catalogToUpdate = await _unitOfWork.CatalogRepository.GetAsync(catalogUpdate.Id, cancellationToken);
 
-                foreach (var item in catalogUpdate.GetType().GetProperties())
-                {
-                    var curPropertyUpdateValue = cityToUpdate.GetType().GetProperty(item.Name)!.GetValue(catalogUpdate);
-                    if (!item.GetValue(cityToUpdate)!.Equals(curPropertyUpdateValue))
-                    {
-                        item.SetValue(cityToUpdate, curPropertyUpdateValue);
-                    }
-                }
+                catalogToUpdate!.Name = catalogUpdate.Name;
+                catalogToUpdate.Description = catalogUpdate.Description;
+                
+                catalogToUpdate.ParentCatalog = ttt.FirstOrDefault();
+                //catalogToUpdate.ParentCatalog = catalogUpdate.ParentCatalog == null ? null : await _unitOfWork.CatalogRepository.GetAsync(catalogUpdate.ParentCatalog!.Value, cancellationToken);
+
+                _unitOfWork.CatalogRepository.Update(catalogToUpdate);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok("Successfully updated");
@@ -141,9 +149,9 @@ namespace TelephoneShop.Controllers
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
             return Ok("Successfully deleted");

@@ -1,13 +1,12 @@
-﻿namespace TelephoneShop.Models
+﻿namespace Domain.DTO.Update
 {
-    public class Telephone
+    public class UpdateCatalog
     {
         public int Id { get; set; }
-
         public string Name { get; set; } = null!;
 
         public string? Description { get; set; }
 
-        public virtual Catalog Catalog { get; set; } = null!;
+        public int? ParentCatalog { get; set; }
     }
 }

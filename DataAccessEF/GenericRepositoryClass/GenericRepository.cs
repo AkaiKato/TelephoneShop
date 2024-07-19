@@ -40,6 +40,7 @@ namespace DataAccessEF.GenericRepository
 
         public void Update(T item)
         {
+            _context.Entry(item).State = EntityState.Modified;
             _context.Set<T>().Update(item);
         }
 
