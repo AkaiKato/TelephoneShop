@@ -1,5 +1,9 @@
-﻿using Domain.Interfaces.UoW;
+﻿using Domain.DTO.Create;
+using Domain.DTO.Get;
+using Domain.DTO.Update;
+using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 using TelephoneShop.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -20,39 +24,233 @@ namespace TelephoneShop.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Telephone> telephones;
+            List<GetTelephone>? getTelephones = new List<GetTelephone>();
 
             try
             {
-                telephones = await _unitOfWork.TelephoneRepository.GetAllAsync(cancellationToken);
+                var telephones = await _unitOfWork.TelephoneRepository.GetAllAsync(cancellationToken);
+
+                if (telephones == null)
+                    return Ok(getTelephones);
+
+                foreach (var item in telephones)
+                {
+                    List<GetCityCost> costs = new List<GetCityCost>();
+                    foreach (var cityCost in item.CitiesToTelephoneCost)
+                    {
+                        costs.Add(
+                            new GetCityCost
+                            {
+                                CityId = cityCost.City.Id,
+                                City = cityCost.City.Name,
+                                Cost = cityCost.Cost,
+                            }
+                        );
+                    }
+
+                    getTelephones.Add( 
+                        new GetTelephone
+                        {
+                            Id = item.Id,
+                            Name = item.Name,
+                            Description = item.Description,
+                            CatalogId = item.Catalog.Id,
+                            CatalogName = item.Catalog.Name,
+                            CityCost = costs,
+                        }
+                    );
+                }
             }
-            finally
+            catch (Exception ex)
             {
-                _unitOfWork.Dispose();
+
             }
 
-            return Ok(telephones);
+            return Ok(getTelephones);
         }
 
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("{id}/Telephone")]
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
-            return "value";
+            GetTelephone? telephone = null;
+            try
+            {
+                if (id <= 0)
+                    return BadRequest();
+
+                if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == id, cancellationToken))
+                    return NotFound($"No element with id {id}");
+
+                var telephoneRaw = await _unitOfWork.TelephoneRepository.GetAsync(id, cancellationToken);
+
+                List<GetCityCost> costs = new List<GetCityCost>();
+                foreach (var cityCost in telephoneRaw.CitiesToTelephoneCost)
+                {
+                    costs.Add(
+                        new GetCityCost
+                        {
+                            CityId = cityCost.City.Id,
+                            City = cityCost.City.Name,
+                            Cost = cityCost.Cost,
+                        }
+                    );
+                }
+
+
+                telephone = new GetTelephone
+                {
+                    Id = telephoneRaw!.Id,
+                    Name = telephoneRaw.Name,
+                    Description = telephoneRaw.Description,
+                    CatalogId = telephoneRaw.Catalog.Id,
+                    CatalogName = telephoneRaw.Catalog.Name,
+                    CityCost = costs,
+                };
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return Ok(telephone);
         }
 
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("CreateTelephone")]
+        public async Task<IActionResult> CreateTelephoneAsync([FromBody] CreateTelephone createTelephone, CancellationToken cancellationToken)
         {
+            try
+            {
+                if (createTelephone == null)
+                    return BadRequest(ModelState);
+
+                if (await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Name.Trim().ToLower() == createTelephone.Name.Trim().ToLower(), cancellationToken))
+                    return BadRequest("Such Telephone is already created");
+
+                if(! await _unitOfWork.CatalogRepository.AnyAsync(x => x.Id == createTelephone.Catalog, cancellationToken))
+                {
+                    return NotFound("Not");
+                }
+
+                var catalog = await _unitOfWork.CatalogRepository.GetAsync(createTelephone.Catalog, cancellationToken);
+
+                var newTelephone = new Telephone
+                {
+                    Name = createTelephone.Name,
+                    Description = createTelephone.Description,
+                    Catalog = catalog!,
+                };
+
+                var cities = new List<CitiesToTelephoneCost>();
+
+                foreach (var item in createTelephone.CTTCost)
+                {
+                    var city = await _unitOfWork.CitiesRepository.GetAsync(item.City, cancellationToken);
+                    if (city == null)
+                    {
+                        return NotFound("nope");
+                    }
+                    cities.Add(new CitiesToTelephoneCost { City = city, Cost = item.Cost, Telephone = newTelephone});
+                }
+
+                foreach (var item in cities)
+                {
+                    _unitOfWork.CitiesToTelephoneCost.Add(item);
+                }
+
+                newTelephone.CitiesToTelephoneCost = cities;
+
+                _unitOfWork.TelephoneRepository.Add(newTelephone);
+
+                await _unitOfWork.SaveAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return Ok("Successfully created");
         }
 
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut("UpdateTelephone")]
+        public async Task<IActionResult> UpdateTelephone([FromBody] UpdateTelephone telephoneUpdate, CancellationToken cancellationToken)
         {
+            try
+            {
+                if (telephoneUpdate == null)
+                    return BadRequest(ModelState);
+
+                if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == telephoneUpdate.Id, cancellationToken))
+                    return NotFound("Such Telephone is not created");
+
+                if (await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Name.Trim().ToLower() == telephoneUpdate.Name.Trim().ToLower()
+                        && x.Id != telephoneUpdate.Id, cancellationToken))
+                    return BadRequest("Telephone with such name already exists");
+
+                var telephoneToUpdate = await _unitOfWork.TelephoneRepository.GetAsync(telephoneUpdate.Id, cancellationToken);
+
+                telephoneToUpdate.Name = telephoneUpdate.Name;
+                telephoneToUpdate.Description = telephoneUpdate.Description;
+
+                if(telephoneToUpdate.Catalog.Id != telephoneUpdate.CatalogId)
+                {
+                    var catalog = await _unitOfWork.CatalogRepository.GetAsync(telephoneUpdate.CatalogId, cancellationToken);
+                    if (catalog == null)
+                    {
+                        return NotFound("No such catalog");
+                    }
+                    telephoneToUpdate.Catalog = catalog;
+                }
+
+                List<CitiesToTelephoneCost> CTTc = new List<CitiesToTelephoneCost>();
+                foreach (var item in telephoneUpdate.CityCost)
+                {
+                    var cityCost = await _unitOfWork.CitiesToTelephoneCost.FindAsync(x => x.Telephone.Id == telephoneUpdate.Id, cancellationToken);
+                    if(cityCost.Count() == 0)
+                    {
+                        return NotFound("No such CityCost");
+                    }
+                    var city = cityCost.First();
+                    city.Cost = item.Cost;
+                    CTTc.Add(city);
+                }
+
+                telephoneToUpdate.CitiesToTelephoneCost = CTTc;
+
+                _unitOfWork.TelephoneRepository.Update(telephoneToUpdate);
+
+                await _unitOfWork.SaveAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return Ok("Successfully updated");
         }
 
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpDelete("DeleteTelephone")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
+            try
+            {
+                if (id <= 0)
+                    return BadRequest();
+
+                if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == id, cancellationToken))
+                    return NotFound($"No element with id {id}");
+
+                var deletedTelephone = await _unitOfWork.TelephoneRepository.GetAsync(id, cancellationToken);
+
+                _unitOfWork.TelephoneRepository.Remove(deletedTelephone!);
+
+                await _unitOfWork.SaveAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return Ok("Successfully deleted");
         }
     }
 }

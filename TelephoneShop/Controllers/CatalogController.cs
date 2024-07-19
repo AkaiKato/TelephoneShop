@@ -1,4 +1,5 @@
 ﻿using Domain.DTO.Create;
+using Domain.DTO.Get;
 using Domain.DTO.Update;
 using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace TelephoneShop.Controllers
         [HttpGet("GetAllCatalogs")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Catalog>? allCatalogs = null;
+            IEnumerable<Catalog>? allCatalogs = Enumerable.Empty<Catalog>();
 
             try
             {
@@ -53,7 +54,7 @@ namespace TelephoneShop.Controllers
 
             }
 
-            return Ok(catalog);
+            return Ok(new GetCatalog { Id = catalog!.Id, Name = catalog.Name, Description = catalog.Description, ParentCatalog = catalog.ParentCatalog});
         }
 
         [HttpPost("CreateCatalog")]

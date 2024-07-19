@@ -1,6 +1,8 @@
 ﻿using Domain.DTO.Create;
+using Domain.DTO.Get;
 using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using TelephoneShop.Models;
 
 namespace TelephoneShop.Controllers
@@ -19,7 +21,7 @@ namespace TelephoneShop.Controllers
         [HttpGet("GetAllCities")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Cities>? allCities = null;
+            IEnumerable<Cities>? allCities = Enumerable.Empty<Cities>();
 
             try
             {
@@ -27,7 +29,6 @@ namespace TelephoneShop.Controllers
             }
             catch (Exception ex)
             {
-
             }
 
             return Ok(allCities);
@@ -49,10 +50,10 @@ namespace TelephoneShop.Controllers
             }
             catch (Exception ex)
             {
-
+                
             }
 
-            return Ok(city);
+            return Ok(new GetCity { Id = city!.Id, Name = city.Name} );
         }
 
         [HttpPost("CreateCity")]

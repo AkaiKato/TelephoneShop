@@ -9,5 +9,7 @@
         public string? Description { get; set; }
 
         public virtual Catalog Catalog { get; set; } = null!;
+
+        public virtual List<CitiesToTelephoneCost>? CitiesToTelephoneCost { get; set; }
     }
 }
