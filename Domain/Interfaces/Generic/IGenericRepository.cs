@@ -11,7 +11,7 @@ namespace Domain.Interfaces.Generic
 
         Task<bool> AnyAsync(Expression<Func<T, bool>> expression, CancellationToken cancellationToken);
 
-        Task AddAsync(T item, CancellationToken cancellationToken);
+        void Add (T item);
 
         void Update (T item);
 

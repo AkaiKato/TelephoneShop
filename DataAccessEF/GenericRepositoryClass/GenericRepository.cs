@@ -33,9 +33,9 @@ namespace DataAccessEF.GenericRepository
             return await _context.Set<T>().AnyAsync(expression, cancellationToken);
         }
 
-        public async Task AddAsync(T item, CancellationToken cancellationToken)
+        public void Add (T item)
         {
-            await _context.Set<T>().AddAsync(item, cancellationToken);
+            _context.Set<T>().Add(item);
         }
 
         public void Update(T item)
