@@ -58,7 +58,7 @@ namespace TelephoneShop.Controllers
             return Ok(city);
         }
 
-        [HttpPost("createCity")]
+        [HttpPost("CreateCity")]
         public async Task<IActionResult> CreateCityAsync([FromBody] CreateCity cityCreate, CancellationToken cancellationToken)
         {
             try
@@ -71,7 +71,7 @@ namespace TelephoneShop.Controllers
 
                 var cityMaped = _mapper.Map<Cities>(cityCreate);
 
-                await _unitOfWork.CitiesRepository.AddAsync(cityMaped, cancellationToken);
+                _unitOfWork.CitiesRepository.Add(cityMaped);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }
@@ -119,7 +119,7 @@ namespace TelephoneShop.Controllers
             return Ok("Successfully updated");
         }
         
-        [HttpDelete("deleteCity")]
+        [HttpDelete("DeleteCity")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             try
@@ -130,9 +130,9 @@ namespace TelephoneShop.Controllers
                 if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == id, cancellationToken))
                     return NotFound($"No element with id {id}");
 
-                var deletedCity = await _unitOfWork.CitiesRepository.FindAsync(x => x.Id == id, cancellationToken);
+                var deletedCity = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
 
-                _unitOfWork.CitiesRepository.Remove(deletedCity.First());
+                _unitOfWork.CitiesRepository.Remove(deletedCity!);
 
                 await _unitOfWork.SaveAsync(cancellationToken);
             }

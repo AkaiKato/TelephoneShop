@@ -9,6 +9,7 @@ namespace Domain.DTO
         public MappingProfiles() 
         {
             CreateMap<CreateCity, Cities>();
+            CreateMap<CreateCatalog, Catalog>();
         }
     }
 }
