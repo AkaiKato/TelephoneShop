@@ -38,11 +38,10 @@ namespace TelephoneShop.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            if (!await _unitOfWork.CatalogRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                return NotFound($"No element with id {id}");
-
             catalog = await _unitOfWork.CatalogRepository.GetAsync(id, cancellationToken);
 
+            if (catalog == null)
+                return NotFound($"No element with id {id}");
 
             return Ok(new GetCatalog { Id = catalog!.Id, Name = catalog.Name, Description = catalog.Description, ParentCatalog = catalog.ParentCatalog });
         }
@@ -50,7 +49,6 @@ namespace TelephoneShop.Controllers
         [HttpPost("CreateCatalog")]
         public async Task<IActionResult> CreateCityAsync([FromBody] CreateCatalog catalogCreate, CancellationToken cancellationToken)
         {
-
             if (catalogCreate == null)
                 return BadRequest(ModelState);
 
@@ -78,18 +76,18 @@ namespace TelephoneShop.Controllers
 
             await _unitOfWork.SaveAsync(cancellationToken);
 
-
             return Ok("Successfully created");
         }
 
         [HttpPut("UpdateCatalog")]
         public async Task<IActionResult> UpdateCatalog([FromBody] UpdateCatalog catalogUpdate, CancellationToken cancellationToken)
         {
-
             if (catalogUpdate == null)
                 return BadRequest(ModelState);
 
-            if (!await _unitOfWork.CatalogRepository.AnyAsync(x => x.Id == catalogUpdate.Id, cancellationToken))
+            var catalogToUpdate = await _unitOfWork.CatalogRepository.GetAsync(catalogUpdate.Id, cancellationToken);
+
+            if (catalogToUpdate == null)
                 return NotFound("Such catalog is not created");
 
             if (await _unitOfWork.CatalogRepository.AnyAsync(x => x.Name.Trim().ToLower() == catalogUpdate.Name.Trim().ToLower()
@@ -97,14 +95,12 @@ namespace TelephoneShop.Controllers
                 return BadRequest("Catalog with such name already exists");
 
             Catalog? parentCatalog = null;
+
             if (catalogUpdate.ParentCatalog != null)
                 parentCatalog = await _unitOfWork.CatalogRepository.GetAsync(catalogUpdate.ParentCatalog.Value, cancellationToken);
 
-            var catalogToUpdate = await _unitOfWork.CatalogRepository.GetAsync(catalogUpdate.Id, cancellationToken);
-
             catalogToUpdate!.Name = catalogUpdate.Name;
             catalogToUpdate.Description = catalogUpdate.Description;
-
             catalogToUpdate.ParentCatalog = parentCatalog;
 
             _unitOfWork.CatalogRepository.Update(catalogToUpdate);
@@ -120,10 +116,10 @@ namespace TelephoneShop.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            if (!await _unitOfWork.CatalogRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                return NotFound($"No element with id {id}");
-
             var deletedCity = await _unitOfWork.CatalogRepository.GetAsync(id, cancellationToken);
+
+            if (deletedCity == null)
+                return NotFound($"No element with id {id}");
 
             _unitOfWork.CatalogRepository.Remove(deletedCity!);
 
