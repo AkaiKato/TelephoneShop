@@ -22,8 +22,6 @@ namespace TelephoneShop.Controllers
         {
             List<GetCity>? allCities = [];
 
-            Thread.Sleep(10000);
-
             var allCitiesRaw = await _unitOfWork.CitiesRepository.GetAllAsync(cancellationToken);
 
             foreach (var city in allCitiesRaw)
