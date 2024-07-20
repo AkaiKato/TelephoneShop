@@ -188,25 +188,21 @@ namespace TelephoneShop.Controllers
                 telephoneToUpdate.Catalog = catalog;
             }
 
-            List<CitiesToTelephoneCost> CTTc = [];
-            foreach (var item in telephoneUpdate.CityCost)
+            if (telephoneToUpdate.CitiesToTelephoneCost != null)
             {
-                var cityCost = await _unitOfWork.CitiesToTelephoneCost.FindAsync(x => x.Telephone.Id == telephoneUpdate.Id, cancellationToken);
-                if (!cityCost.Any())
+                var tt = await _unitOfWork.TelephoneRepository.ReturnCityCostByItemIdAsync(telephoneUpdate.Id);
+                foreach (var item in telephoneUpdate.CityCost)
                 {
-                    return NotFound("No such CityCost");
-                }
-                var city = cityCost.First();
-                city.Cost = item!.Cost;
-                CTTc.Add(city);
-            }
+                    if (!tt.Any(x => x.Telephone == telephoneUpdate.Id))
+                        return NotFound("No such CityCost");
 
-            telephoneToUpdate.CitiesToTelephoneCost = CTTc;
+                    telephoneToUpdate.CitiesToTelephoneCost!.Find(x => x.City.Id == item!.CityId)!.Cost = item!.Cost;
+                }
+            }
 
             _unitOfWork.TelephoneRepository.Update(telephoneToUpdate);
 
             await _unitOfWork.SaveAsync(cancellationToken);
-
 
             return Ok("Successfully updated");
         }
@@ -214,7 +210,6 @@ namespace TelephoneShop.Controllers
         [HttpDelete("DeleteTelephone")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-
             if (id <= 0)
                 return BadRequest();
 
