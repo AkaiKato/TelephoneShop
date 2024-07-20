@@ -1,5 +1,6 @@
 ﻿using Domain.DTO.Add;
 using Domain.DTO.Create;
+using Domain.DTO.Delete;
 using Domain.DTO.Get;
 using Domain.DTO.Update;
 using Domain.Interfaces.UoW;
@@ -248,6 +249,34 @@ namespace TelephoneShop.Controllers
             await _unitOfWork.SaveAsync(cancellationToken);
 
             return Ok("Successfully deleted");
-        }    
+        }
+
+        [HttpDelete("DeleteCityFromTelephone")]
+        public async Task<IActionResult> DeleteCityFromTelephone([FromBody] DeleteCityFromTelephone addCityToTelephone, CancellationToken cancellationToken)
+        {
+            if (addCityToTelephone == null)
+                return BadRequest(ModelState);
+
+            var telephoneToUpdate = await _unitOfWork.TelephoneRepository.GetAsync(addCityToTelephone.TelephoneId, cancellationToken);
+
+            if (telephoneToUpdate == null)
+                return NotFound("Such Telephone is not created");
+
+            telephoneToUpdate.CitiesToTelephoneCost ??= [];
+
+            foreach (var item in addCityToTelephone.CityIds)
+            {
+                var cityToCost = (await _unitOfWork.CitiesToTelephoneCost.FindAsync(x => x.City.Id == item && x.Telephone.Id == telephoneToUpdate.Id ,cancellationToken)).First();
+
+                if (cityToCost == null)
+                    return NotFound("No such relation");
+
+                telephoneToUpdate.CitiesToTelephoneCost.Remove(cityToCost);
+            }
+
+            await _unitOfWork.SaveAsync(cancellationToken);
+
+            return Ok("Successfully deleted");
+        }
     }
 }
