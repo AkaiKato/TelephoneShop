@@ -2,6 +2,7 @@ using DataAccessEF.Data;
 using DataAccessEF.UoW;
 using Domain.Interfaces.UoW;
 using Microsoft.EntityFrameworkCore;
+using TelephoneShop;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.ConfigureExceptionHandler());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

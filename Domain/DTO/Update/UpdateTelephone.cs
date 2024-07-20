@@ -10,6 +10,6 @@
 
         public int CatalogId { get; set; }
 
-        public virtual List<UpdateCityCost>? CityCost { get; set; }
+        public virtual List<UpdateCityCost?> CityCost { get; set; } = null!;
     }
 }

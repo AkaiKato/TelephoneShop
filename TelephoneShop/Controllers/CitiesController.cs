@@ -2,7 +2,6 @@
 using Domain.DTO.Get;
 using Domain.Interfaces.UoW;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using TelephoneShop.Models;
 
 namespace TelephoneShop.Controllers
@@ -21,65 +20,61 @@ namespace TelephoneShop.Controllers
         [HttpGet("GetAllCities")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            IEnumerable<Cities>? allCities = Enumerable.Empty<Cities>();
+            List<GetCity>? allCities = [];
 
-            try
+            Thread.Sleep(10000);
+
+            var allCitiesRaw = await _unitOfWork.CitiesRepository.GetAllAsync(cancellationToken);
+
+            foreach (var city in allCitiesRaw)
             {
-                allCities = await _unitOfWork.CitiesRepository.GetAllAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
+                allCities.Add(new GetCity
+                {
+                    Id = city.Id,
+                    Name = city.Name,
+                });
             }
 
             return Ok(allCities);
         }
 
         [HttpGet("{id}/city")]
-        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken) 
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
             Cities? city = null;
-            try
-            {
-                if (id <= 0)
-                    return BadRequest();
 
-                if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                    return NotFound($"No element with id {id}");
+            if (id <= 0)
+                return BadRequest();
 
-                city = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                
-            }
+            if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == id, cancellationToken))
+                return NotFound($"No element with id {id}");
 
-            return Ok(new GetCity { Id = city!.Id, Name = city.Name} );
+            city = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
+
+
+            return Ok(new GetCity { Id = city!.Id, Name = city.Name });
         }
 
         [HttpPost("CreateCity")]
         public async Task<IActionResult> CreateCityAsync([FromBody] CreateCity cityCreate, CancellationToken cancellationToken)
         {
-            try
+
+            if (cityCreate == null)
+                return BadRequest(ModelState);
+
+            if (await _unitOfWork.CitiesRepository.AnyAsync(x => x.Name.Trim().ToLower() == cityCreate.Name.Trim().ToLower(), cancellationToken))
+                return BadRequest("Such sity is already created");
+
+            var newCity = new Cities
             {
-                if (cityCreate == null)
-                    return BadRequest(ModelState);
+                Name = cityCreate.Name,
+            };
 
-                if (await _unitOfWork.CitiesRepository.AnyAsync(x => x.Name.Trim().ToLower() == cityCreate.Name.Trim().ToLower(), cancellationToken))
-                    return BadRequest("Such sity is already created");
+            _unitOfWork.CitiesRepository.Add(newCity);
 
-                var newCity = new Cities
-                {
-                    Name = cityCreate.Name,
-                };
+            await _unitOfWork.SaveAsync(cancellationToken);
 
-                _unitOfWork.CitiesRepository.Add(newCity);
 
-                await _unitOfWork.SaveAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-
-            }
 
             return Ok("Successfully created");
         }
@@ -87,60 +82,49 @@ namespace TelephoneShop.Controllers
         [HttpPut("UpdateCity")]
         public async Task<IActionResult> UpdateCity([FromBody] Cities cityUpdate, CancellationToken cancellationToken)
         {
-            try
+
+            if (cityUpdate == null)
+                return BadRequest(ModelState);
+
+            if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == cityUpdate.Id, cancellationToken))
+                return NotFound("Such sity is not created");
+
+            if (await _unitOfWork.CitiesRepository.AnyAsync(x => x.Name.Trim().ToLower() == cityUpdate.Name.Trim().ToLower()
+                    && x.Id != cityUpdate.Id, cancellationToken))
+                return BadRequest("Sity with such name already exists");
+
+            var cityToUpdate = (await _unitOfWork.CitiesRepository.FindAsync(x => x.Id == cityUpdate.Id, cancellationToken)).First();
+
+            foreach (var item in cityUpdate.GetType().GetProperties())
             {
-                if (cityUpdate == null)
-                    return BadRequest(ModelState);
-
-                if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == cityUpdate.Id, cancellationToken))
-                    return NotFound("Such sity is not created");
-
-                if (await _unitOfWork.CitiesRepository.AnyAsync(x => x.Name.Trim().ToLower() == cityUpdate.Name.Trim().ToLower()
-                        && x.Id != cityUpdate.Id, cancellationToken))
-                    return BadRequest("Sity with such name already exists");
-
-                var cityToUpdate = (await _unitOfWork.CitiesRepository.FindAsync(x => x.Id == cityUpdate.Id, cancellationToken)).First();
-
-                foreach (var item in cityUpdate.GetType().GetProperties())
+                var curPropertyUpdateValue = cityToUpdate.GetType().GetProperty(item.Name)!.GetValue(cityUpdate);
+                if (!item.GetValue(cityToUpdate)!.Equals(curPropertyUpdateValue))
                 {
-                    var curPropertyUpdateValue = cityToUpdate.GetType().GetProperty(item.Name)!.GetValue(cityUpdate);
-                    if (!item.GetValue(cityToUpdate)!.Equals(curPropertyUpdateValue))
-                    {
-                        item.SetValue(cityToUpdate, curPropertyUpdateValue);
-                    }
+                    item.SetValue(cityToUpdate, curPropertyUpdateValue);
                 }
-
-                await _unitOfWork.SaveAsync(cancellationToken);
             }
-            catch (Exception ex)
-            {
 
-            }
+            await _unitOfWork.SaveAsync(cancellationToken);
+
 
             return Ok("Successfully updated");
         }
-        
+
         [HttpDelete("DeleteCity")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            try
-            {
-                if (id <= 0)
-                    return BadRequest();
 
-                if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                    return NotFound($"No element with id {id}");
+            if (id <= 0)
+                return BadRequest();
 
-                var deletedCity = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
+            if (!await _unitOfWork.CitiesRepository.AnyAsync(x => x.Id == id, cancellationToken))
+                return NotFound($"No element with id {id}");
 
-                _unitOfWork.CitiesRepository.Remove(deletedCity!);
+            var deletedCity = await _unitOfWork.CitiesRepository.GetAsync(id, cancellationToken);
 
-                await _unitOfWork.SaveAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-            
-            }
+            _unitOfWork.CitiesRepository.Remove(deletedCity!);
+
+            await _unitOfWork.SaveAsync(cancellationToken);
 
             return Ok("Successfully deleted");
         }
