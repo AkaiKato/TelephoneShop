@@ -1,4 +1,5 @@
-﻿using Domain.DTO.Create;
+﻿using Domain.DTO.Add;
+using Domain.DTO.Create;
 using Domain.DTO.Get;
 using Domain.DTO.Update;
 using Domain.Interfaces.UoW;
@@ -71,14 +72,14 @@ namespace TelephoneShop.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                return NotFound($"No element with id {id}");
-
             var telephoneRaw = await _unitOfWork.TelephoneRepository.GetAsync(id, cancellationToken);
+
+            if (telephoneRaw == null)
+                return NotFound($"No element with id {id}");
 
             List<GetCityCost> costs = [];
 
-            if (telephoneRaw!.CitiesToTelephoneCost != null)
+            if (telephoneRaw.CitiesToTelephoneCost != null)
             {
                 foreach (var cityCost in telephoneRaw.CitiesToTelephoneCost)
                 {
@@ -93,10 +94,9 @@ namespace TelephoneShop.Controllers
                 }
             }
 
-
             telephone = new GetTelephone
             {
-                Id = telephoneRaw!.Id,
+                Id = telephoneRaw.Id,
                 Name = telephoneRaw.Name,
                 Description = telephoneRaw.Description,
                 CatalogId = telephoneRaw.Catalog.Id,
@@ -118,12 +118,10 @@ namespace TelephoneShop.Controllers
             if (await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Name.Trim().ToLower() == createTelephone.Name.Trim().ToLower(), cancellationToken))
                 return BadRequest("Such Telephone is already created");
 
-            if (!await _unitOfWork.CatalogRepository.AnyAsync(x => x.Id == createTelephone.Catalog, cancellationToken))
-            {
-                return NotFound("Not");
-            }
-
             var catalog = await _unitOfWork.CatalogRepository.GetAsync(createTelephone.Catalog, cancellationToken);
+
+            if (catalog == null)
+                return NotFound("Not");
 
             var newTelephone = new Telephone
             {
@@ -132,7 +130,7 @@ namespace TelephoneShop.Controllers
                 Catalog = catalog!,
             };
 
-            var cities = new List<CitiesToTelephoneCost>();
+            List<CitiesToTelephoneCost> cities = [];
 
             foreach (var item in createTelephone.CTTCost)
             {
@@ -159,23 +157,50 @@ namespace TelephoneShop.Controllers
             return Ok("Successfully created");
         }
 
+        [HttpPost("AddCityToTelephone")]
+        public async Task<IActionResult> AddCityToTelephoneAsync([FromBody] AddCityToTelephone addCityToTelephone, CancellationToken cancellationToken)
+        {
+            if (addCityToTelephone == null)
+                return BadRequest(ModelState);
+
+            var telephoneToUpdate = await _unitOfWork.TelephoneRepository.GetAsync(addCityToTelephone.TelephoneId, cancellationToken);
+
+            if (telephoneToUpdate == null)
+                return NotFound("Such Telephone is not created");
+
+            telephoneToUpdate.CitiesToTelephoneCost ??= [];
+
+            foreach (var item in addCityToTelephone.Cities)
+            {
+                var city = await _unitOfWork.CitiesRepository.GetAsync(item.CityId, cancellationToken);
+
+                if (city == null)
+                    return NotFound("No such city");
+
+                telephoneToUpdate.CitiesToTelephoneCost.Add(new CitiesToTelephoneCost { City = city, Telephone = telephoneToUpdate, Cost = item.Cost});
+            }
+
+            await _unitOfWork.SaveAsync(cancellationToken);
+
+            return Ok("Successfully added");
+        }
+
         [HttpPut("UpdateTelephone")]
         public async Task<IActionResult> UpdateTelephone([FromBody] UpdateTelephone telephoneUpdate, CancellationToken cancellationToken)
         {
-
             if (telephoneUpdate == null)
                 return BadRequest(ModelState);
 
-            if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == telephoneUpdate.Id, cancellationToken))
+            var telephoneToUpdate = await _unitOfWork.TelephoneRepository.GetAsync(telephoneUpdate.Id, cancellationToken);
+
+            if (telephoneToUpdate == null)
                 return NotFound("Such Telephone is not created");
 
             if (await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Name.Trim().ToLower() == telephoneUpdate.Name.Trim().ToLower()
                     && x.Id != telephoneUpdate.Id, cancellationToken))
                 return BadRequest("Telephone with such name already exists");
 
-            var telephoneToUpdate = await _unitOfWork.TelephoneRepository.GetAsync(telephoneUpdate.Id, cancellationToken);
-
-            telephoneToUpdate!.Name = telephoneUpdate.Name;
+            telephoneToUpdate.Name = telephoneUpdate.Name;
             telephoneToUpdate.Description = telephoneUpdate.Description;
 
             if (telephoneToUpdate.Catalog.Id != telephoneUpdate.CatalogId)
@@ -190,10 +215,10 @@ namespace TelephoneShop.Controllers
 
             if (telephoneToUpdate.CitiesToTelephoneCost != null)
             {
-                var tt = await _unitOfWork.TelephoneRepository.ReturnCityCostByItemIdAsync(telephoneUpdate.Id);
+                var getAllCities = await _unitOfWork.TelephoneRepository.ReturnCityCostByItemIdAsync(telephoneUpdate.Id);
                 foreach (var item in telephoneUpdate.CityCost)
                 {
-                    if (!tt.Any(x => x.Telephone == telephoneUpdate.Id))
+                    if (!getAllCities.Any(x => x.Telephone == telephoneUpdate.Id))
                         return NotFound("No such CityCost");
 
                     telephoneToUpdate.CitiesToTelephoneCost!.Find(x => x.City.Id == item!.CityId)!.Cost = item!.Cost;
@@ -213,10 +238,10 @@ namespace TelephoneShop.Controllers
             if (id <= 0)
                 return BadRequest();
 
-            if (!await _unitOfWork.TelephoneRepository.AnyAsync(x => x.Id == id, cancellationToken))
-                return NotFound($"No element with id {id}");
-
             var deletedTelephone = await _unitOfWork.TelephoneRepository.GetAsync(id, cancellationToken);
+
+            if (deletedTelephone == null)
+                return NotFound($"No element with id {id}");
 
             _unitOfWork.TelephoneRepository.Remove(deletedTelephone!);
 
